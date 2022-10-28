@@ -17,9 +17,10 @@ module "vpc" {
 
  // enable_nat_gateway = true
 //  single_nat_gateway  = true
+
+
   enable_dns_hostnames = true
   enable_dns_support   = true
-
 
   tags = {
     Terraform = "true"
@@ -37,6 +38,7 @@ resource "aws_security_group" "ssh_security_group" {
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   egress {
     from_port = 0
     to_port = 0
@@ -44,6 +46,7 @@ resource "aws_security_group" "ssh_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
     prefix_list_ids = []
   }
+
   
   tags = {
     "Name" = "ssh-sg"
@@ -64,7 +67,6 @@ resource "aws_security_group" "efs_security_group" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
 }  
 
 resource "aws_efs_file_system" "my_app_efs" {
@@ -87,7 +89,7 @@ resource "aws_key_pair" "ssh_key" {
   public_key = file(var.public_key_location)
 }
 
-resource "aws_instance" "python-app-server" {
+resource "aws_instance" "myapp-server" {
   ami = "ami-0e6329e222e662a52"
   instance_type = "t2.micro"
 
@@ -110,16 +112,28 @@ resource "aws_instance" "python-app-server" {
 
   provisioner "remote-exec" {
    inline = [
-     "sudo mount -t nfs4 ${aws_efs_mount_target.one_azs.ip_address}: / /var/www/html/"
-   ]
+    "sudo yum install httpd -y -q",
+      "sleep 15",
+      "sudo yum install php  -y -q ",
+      "sleep 5",
+      "sudo systemctl start httpd",
+      "sleep 5",
+      "sudo systemctl enable httpd",
+      "sleep 5",
+      "sudo service rpcbind restart",
+      "sleep 15",
+      # Mounting Efs 
+      "sudo mount -t nfs -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${aws_efs_file_system.  my_app_efs.dns_name}:/  /var/www/html/",
+      "sleep 15",
+      "sudo chmod go+rw /var/www/html",
+      "sudo bash -c 'echo Welcome  > /var/www/html/index.html'",
+    ]
 
   }
 
  
 
   tags = {
-    "Name" = "deploy-server"
+    "Name" = "server"
   }
-  
- 
 }

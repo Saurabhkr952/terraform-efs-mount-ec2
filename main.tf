@@ -118,7 +118,7 @@ resource "aws_instance" "python-app-server" {
  
 
   tags = {
-    "Name" = "server"
+    "Name" = "deploy-server"
   }
   
  

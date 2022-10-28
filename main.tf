@@ -89,7 +89,7 @@ resource "aws_instance" "python-app-server" {
 
  # user_data = file("entry-script.sh")
 
-  connection = {
+  connection {
     type = "ssh"
     host = self.public_ip
     user = "ec2-user"

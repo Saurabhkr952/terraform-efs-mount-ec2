@@ -17,6 +17,9 @@ module "vpc" {
 
  // enable_nat_gateway = true
 //  single_nat_gateway  = true
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
 
   tags = {
     Terraform = "true"
@@ -33,6 +36,13 @@ resource "aws_security_group" "ssh_security_group" {
     to_port = 22
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    prefix_list_ids = []
   }
   
   tags = {
@@ -54,6 +64,7 @@ resource "aws_security_group" "efs_security_group" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
 }  
 
 resource "aws_efs_file_system" "my_app_efs" {
@@ -89,7 +100,7 @@ resource "aws_instance" "python-app-server" {
 
  # user_data = file("entry-script.sh")
 
-  connection = {
+  connection {
     type = "ssh"
     host = self.public_ip
     user = "ec2-user"
